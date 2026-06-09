@@ -495,6 +495,12 @@ hr { border: none; border-top: 1px solid var(--rule); margin: 20px 0; }
     <span class="topbar-name">Plastinova Industrial</span>
     <span class="topbar-sub">Pólizas de Transporte</span>
   </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <label style="font-size:11px;color:var(--ink3);font-family:var(--mono)">API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." 
+      style="width:200px;font-size:11px;padding:5px 9px;border:1px solid var(--rule2);border-radius:5px;font-family:var(--mono);background:var(--off);color:var(--ink);outline:none"
+      oninput="saveKey(this.value)">
+  </div>
   <span class="topbar-badge">ALCODESE · 828</span>
 </div>
 
@@ -753,12 +759,20 @@ Responde SOLO con JSON válido sin texto adicional ni backticks:
 {"bien":"nombre del bien","procedencia":"país/ciudad origen","destino":"Bodegas del Asegurado","via":"Aéreo o Marítimo o Terrestre","valor_bien":"número sin comas ej 45000","valor_flete":"número sin comas ej 2500","notas":"detalles adicionales o vacío"}
 
 Si no encuentras un campo usa null. destino SIEMPRE es "Bodegas del Asegurado".`;
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if(!apiKey){ showErr('err1','Ingresa tu API Key de Anthropic primero.'); return; }
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST', headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      method:'POST', headers:{
+        'Content-Type':'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})
     });
     const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
     const txt = data.content.map(c=>c.text||'').join('');
     state.extracted = JSON.parse(txt.replace(/```json|```/g,'').trim());
     state.emailText = emailText;
@@ -1022,6 +1036,18 @@ function copyEmail(type) {
     setTimeout(()=>btn.innerHTML=orig,2000);
   });
 }
+
+function saveKey(val) {
+  try { localStorage.setItem('pi_api_key', val); } catch(e){}
+}
+function loadKey() {
+  try {
+    const k = localStorage.getItem('pi_api_key');
+    if(k) document.getElementById('apiKey').value = k;
+  } catch(e){}
+}
+// Load key on startup
+window.addEventListener('load', loadKey);
 
 function formatDate(d){
   const dd=String(d.getDate()).padStart(2,'0');

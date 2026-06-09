@@ -44,6 +44,33 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
+.key-banner {
+  background: #fffbeb;
+  border-bottom: 1px solid #fde68a;
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.key-banner label { color: var(--ink2); font-weight: 500; white-space: nowrap; }
+.key-banner input {
+  flex: 1; max-width: 380px;
+  padding: 7px 12px;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: white;
+  color: var(--ink);
+  outline: none;
+}
+.key-banner input:focus { border-color: var(--blue); }
+.key-banner .key-ok {
+  font-size: 12px; color: var(--green);
+  font-family: var(--mono); font-weight: 500;
+  display: none;
+}
 
 /* ── TOP BAR ── */
 .topbar {
@@ -495,13 +522,14 @@ hr { border: none; border-top: 1px solid var(--rule); margin: 20px 0; }
     <span class="topbar-name">Plastinova Industrial</span>
     <span class="topbar-sub">Pólizas de Transporte</span>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <label style="font-size:11px;color:var(--ink3);font-family:var(--mono)">API Key</label>
-    <input type="password" id="apiKey" placeholder="sk-ant-..." 
-      style="width:200px;font-size:11px;padding:5px 9px;border:1px solid var(--rule2);border-radius:5px;font-family:var(--mono);background:var(--off);color:var(--ink);outline:none"
-      oninput="saveKey(this.value)">
-  </div>
   <span class="topbar-badge">ALCODESE · 828</span>
+</div>
+
+<!-- API KEY BANNER -->
+<div class="key-banner" id="keyBanner">
+  <label>🔑 API Key de Anthropic:</label>
+  <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="saveKey(this.value)">
+  <span class="key-ok" id="keyOk">✓ Key guardada</span>
 </div>
 
 <div class="layout">
@@ -1039,14 +1067,26 @@ function copyEmail(type) {
 
 function saveKey(val) {
   try { localStorage.setItem('pi_api_key', val); } catch(e){}
+  const ok = document.getElementById('keyOk');
+  if(val.startsWith('sk-ant')) {
+    ok.style.display = 'block';
+    setTimeout(()=>{ ok.style.display='none'; }, 2000);
+  }
 }
 function loadKey() {
   try {
     const k = localStorage.getItem('pi_api_key');
-    if(k) document.getElementById('apiKey').value = k;
+    if(k) {
+      document.getElementById('apiKey').value = k;
+      // If key already saved, collapse banner to small indicator
+      if(k.startsWith('sk-ant')) {
+        document.getElementById('keyBanner').style.padding = '6px 32px';
+        document.getElementById('keyBanner').style.background = '#f0fdf4';
+        document.getElementById('keyBanner').style.borderBottomColor = '#a7f3d0';
+      }
+    }
   } catch(e){}
 }
-// Load key on startup
 window.addEventListener('load', loadKey);
 
 function formatDate(d){
